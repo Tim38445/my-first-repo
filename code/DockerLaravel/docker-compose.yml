@@ -1,0 +1,40 @@
+services: 
+nginx:
+build: ./docker/nginx
+container_name: laravel-nginx
+ports:
+- "8080:80"
+volumes: 
+- ./hello:/var/www/html
+depends_on:
+- php 
+
+php:
+build: ./docker/php
+container_name: laravel-php
+volumes:
+- ./hello:/var/www/html
+depends_on:
+mysql:
+condition: service_healthy
+
+mysql:
+build: ./docler/mysql
+containr_name: laravel-mysql
+environment:
+- MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+- MYSQL_DATABASE=${MYSQL_DATABASE}
+- MYSQL_USER=${MYSQL_USER}
+- MYSQL_PASSWORS=${MYSQL_PASSWORD}
+volumes:
+- mysql-data:/var/lib/mysql
+- ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+networks:
+- laravel-network
+
+healthcheck:
+test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$MYSQL_ROOT_PASSWORD --silent"]
+interval: 10s
+timeout: 5s
+retries: 5s
+start_period: 30s
